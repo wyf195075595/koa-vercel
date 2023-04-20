@@ -2,7 +2,7 @@
  * @Description: 
  * @Author:  
  * @Date: 2023-04-20 16:04:35
- * @LastEditTime: 2023-04-20 16:47:54
+ * @LastEditTime: 2023-04-20 17:11:33
  * @LastEditors:  
  */
 const Koa = require('koa');
@@ -14,7 +14,7 @@ app.use(cors());
 
 // 设置静态资源
 const static = require('koa-static');
-app.use(static((__dirname + '/static')))
+app.use(static(__dirname+ '/static'))
 
 
 // 设置响应格式
