@@ -2,9 +2,10 @@
   "name": "vercel",
   "version": "1.0.0",
   "description": "",
-  "main": "main.js",
+  "main": "index.js",
   "scripts": {
-    "build": "node main.js"
+    "start": "node index.js",
+    "build": "node index.js"
   },
   "keywords": [],
   "author": "",
