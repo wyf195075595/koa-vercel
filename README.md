@@ -1,258 +1,179 @@
-This is a beginner tutorial of Travis CI for Node projects.
+> vercel 不仅能够部署静态网站，还能部署node项目。这次就部署koa项目作为尝试。
 
-## How to use
 
-**Step 1**
 
-Fork the repo (If you don't know what is fork, [click here](https://guides.github.com/activities/forking/)). Then, clone your fork into disk.
+### 项目目录
 
-```bash
-$ git clone git@github.com:[your_username]/travis-ci-demo.git
+> 新建koa项目，目录如下
+
+![image-20230421090353337](https://raw.githubusercontent.com/wyf195075595/images/main/blog/image-20230421090353337.png)
+
+#### 入口文件
+
+> 入口文件一定要是index.js,如果改写其他如 app.js,main.js 等等 vercel 均无法识别，这是一个大坑.
+>
+> koa 监听端口不能是 3000 ,因为vercel 默认是 3000 端口
+
+```js
+const Koa = require('koa');
+const app = new Koa();
+
+// 跨域处理
+const cors = require('koa-cors');
+app.use(cors());
+
+// 设置静态资源
+const static = require('koa-static');
+app.use(static(__dirname+ '/static'))
+
+
+// 设置响应格式
+const routerResponse = require('./middleware/routerResponse');
+app.use(routerResponse({
+    code:200,
+}))
+
+// 获取post请求参数
+const bodyparser = require('koa-bodyparser');
+app.use(bodyparser())
+
+// 注册路由
+const controller = require('./middleware/controllers');
+app.use(controller());
+
+
+app.listen(3030,()=>{
+	console.log('port 3030 is running!')
+});
 ```
 
-**Step 2**
+#### 路由文件
 
-Sign in to [Travis CI](https://travis-ci.org/auth) with your GitHub account. Go to [profile page](https://travis-ci.org/profile) and open the travis-ci-demo repository to run Travis CI builds.
+> 因为没有数据库，路由中使用axios请求了接口获取数据
 
-**Step 3**
+```js
+const http = require("../utils/http");
+var fn_index = async (ctx, next) => {
+    ctx.response.body = `<h1>Index</h1>
+        <form action="/signin" method="post">
+            <p>Name: <input name="name" value="koa"></p>
+            <p>Password: <input name="password" type="password"></p>
+            <p><input type="submit" value="Submit"></p>
+        </form>`;
+};
 
-Return to your termial window. Change into the travis-ci-demo directory, and switch into the `demo01` branch.
+var fn_signin = async (ctx, next) => {
+    var name = ctx.request.body.name || '',
+        password = ctx.request.body.password || '';
+    if (name === 'koa' && password === '12345') {
+        ctx.success({
+            ok:'xxxxx'
+        })
+    } else {
+        ctx.response.body = `<h1>Login failed!</h1>
+        <p><a href="/">Try again</a></p>`;
+    }
+};
 
-```bash
-$ cd travis-ci-demo
-$ git checkout demo01
+var fetchData = async (ctx, next) => {
+    let rs = await http.get("https://www.fastmock.site/mock/cc1aeeec1b278c3c30ec60eeaf462247/front/getPicList")
+    ctx.success({
+        data: rs
+    })
+}
+
+module.exports = {
+    'GET /login': fn_index,
+    'GET /getData': fetchData,
+    'POST /signin': fn_signin
+};
 ```
 
-Create an empty `NewUser.txt` file. Add the file to git, commit and push, to trigger a Travis CI build.
+> koa项目搭建好后可以在本地运行，访问静态资源，接口没有问题后。就开始改造
 
-```bash
-$ touch NewUser.txt
-$ git add -A
-$ git commit -m 'Testing Travis CI'
-$ git push
+### 部署准备
+
+> 部署到 vercel 需要做一些配置
+
+1. package.json 新增 script
+
+	```js
+	# vercel 部署时会用到
+	"build": "node index.js"
+	```
+
+2. 安装 @vercel/node
+
+	```shell
+	# 必备
+	yarn add @vercel/node
+	```
+
+3. 新建vercel.json
+
+	```js
+	# 覆盖 vercel 默认行为
+	{
+	    "version": 2,
+	    "builds": [
+	      {
+	        "src": "index.js",
+	        "use": "@vercel/node"
+	      }
+	    ]
+	  }
+	```
+
+4. 安装vercel 并登录
+
+	```shell
+	# 安装 vercel
+	npm i vercel -g
+	# 登录 Vercel 账号。
+	vercel login
+	
+	
+	------------------其他命令----------------------
+	# 本地开启服务。
+	vercel dev
+	# 本地开启服务并打印日志。
+	vercel dev --bug
+	# 部署本地资源到 Vercel 上。
+	vercel
+	# 更新本地网页。
+	vercel --prod
+	
+	vercel 可以用 vc 来代替，vc 是 Vercel 的缩写。
+	```
+
+### 部署
+
+```shell
+vercel
 ```
 
-**Step 4**
+![vercel](https://s9.51cto.com/oss/202205/10/d78f532685481bcc147866bb9c8a2276277074.png)
 
-Go to [Travis CI](https://travis-ci.org/). Wait for it to run a build on your repository, check the [build status](https://travis-ci.org/repositories). (Travis CI will sends an email to tell you the build result as well.)
-
-**Step 5**
-
-Switch into other demo* branches, and repeat the step 3rd and 4th.
-
-## Index
-
-- [Demo01: Linting (JShint)](https://github.com/ruanyf/travis-ci-demo/tree/demo01)
-- [Demo02: Testing (Mocha)](https://github.com/ruanyf/travis-ci-demo/tree/demo02)
-- [Demo03: Testing (Tape)](https://github.com/ruanyf/travis-ci-demo/tree/demo03)
-- [Demo04: After script (Coverall)](https://github.com/ruanyf/travis-ci-demo/tree/demo04)
-
----
-
-## What is Travis CI?
-
-[Travis CI](https://travis-ci.org/) is a hosted [continuous integration](https://en.wikipedia.org/wiki/Continuous_integration) platform that is free for all open source projects hosted on Github.
-
-With a file called `.travis.yml`, you can trigger automated builds with every change to your repo.
-
-## What is `.travis.yml`?
-
-A file called `.travis.yml` in the root of your repository tells Travis CI what to do.
-
-> - What programming language your project uses
-> - What commands or scripts you want to be executed before each build (for example, to install or clone your project’s dependencies)
-> - What command is used to run your test suite
-> - Emails, Campfire and IRC rooms to notify about build failures
-
-You should use this file to customize Travis CI's building behavior. After modifing it, you can use [lint.travis-ci.org](http://lint.travis-ci.org/) to verify this file.
-
-Note that for historical reasons `.travis.yml` needs to be present on all active branches of your project.
-
-## How to write `.travis.yml`?
-
-### 1. Specifying Runtime Versions
-
-The first thing you should do is to specify what languages and runtimes to run your test suite against in the `.travis.yml` file.
-
-```yaml
-language: node_js
-node_js:
-  - "Node"
+```js
+# 更新资源
+vercel --prod
 ```
 
-The above `.travis.yml` tells Travis CI that this project should be built with the latest stable version of Node. (You also could use `stable` to replace `node`. They are synonym.)
+> [此处参考文章](https://www.51cto.com/article/708495.html)
+>
+> 此处操作vercel生成vercel-koa2 但是操作后代码并没有上传至 vercel, 还是得将代码提交到 github 再关联到 vercel
 
-Travis CI uses nvm to specify Node versions. Any version nvm could recognize can be used in `.travis.yml`.
+### 访问
 
-```yaml
-language: node_js
-node_js:
-  - "4.1"
-  - "4.0"
-  - "0.12"
-  - "0.11"
-  - "0.10"
-  - "0.8"
-  - "0.6"
-  - "iojs"
+```shell
+# 访问地址，默认会访问到 static 中得 index,而不是根目录得index.html
+https://vercel-koa-three.vercel.app/
+
+# 查看获取数据得接口
+https://vercel-koa-three.vercel.app/getData
 ```
 
-This above code will make Travis CI run your tests against the latest version 0.6.x, 0.8.x, 0.10.x, 0.11.x, 0.12.x, 4.0.x, and 4.1.x branch releases, as well as the latest io.js stable release.
+> 注意接口 注册时不要使用 /, 因为/ 会默认访问 static/index.html
+>
+> [项目源码](https://github.com/wyf195075595/koa-vercel)
 
-Specifying only a major and minor version (e.g., “0.12”) will run using the latest published patch release for that version. If a specific version is not needed, It is encouraged to specify node to run using the latest stable releases.
-
-Official dos has a [list](http://docs.travis-ci.com/user/customizing-the-build/#Specifying-Runtime-Versions) of all languages and runtimes Travis CI supports.
-
-### 2. Default Building Behavior
-
-A build on Travis CI is made up of two steps:
-
-- install: install any dependencies required
-- script: run the build script
-
-By default, Travis CI will run
-
-```bash
-$ npm install
-```
-
-to install your dependencies.
-
-For projects using npm, Travis CI will execute
-
-```bash
-$ npm test
-```
-
-to run your test suite.
-
-### 3. The Lifecycle
-
-You can run custom commands before the installation step (`before_install`), and before (`before_script`) or after (`after_script`) the script step.
-
-You can perform additional steps when your build succeeds or fails using the `after_success` (such as building documentation, or deploying to a custom server) or `after_failure` (such as uploading log files) options. In both `after_failure` and `after_success`, you can access the build result using the `$TRAVIS_TEST_RESULT` environment variable.
-
-The complete build lifecycle is:
-
-1. `before_install`
-1. `install`
-1. `before_script`
-1. `script`
-1. `after_success` or `after_failure`
-1. `after_script`
-1. OPTIONAL `before_deploy`
-1. OPTIONAL `deploy`
-1. OPTIONAL `after_deploy`
-
-### 4. Customizing the Installation Step
-
-Travis CI uses the default dependency installation commands depend on the project language to install the dependencies. For Node projects, the default dependency installation commands is `npm install`.
-
-```yaml
-install:
-  - npm install
-```
-
-You can specify your own script to run to install whatever dependencies your project requires in `.travis.yml`.
-
-```yaml
-install: ./install-dependencies.sh
-```
-
-When one of the steps fails, the build stops immediately and is marked as errored.
-
-You can skip the installation step entirely by adding the following to your `.travis.yml`.
-
-```yaml
-install: true
-```
-
-### 5. Customizing the Build Step
-
-The default build command depends on the project language. You can overwrite the default build step in .travis.yml:
-
-```yaml
-script:
-  - bundle exec rake build
-  - bundle exec rake builddoc
-```
-
-When one of the build commands returns a non-zero exit code, the Travis CI build runs the subsequent commands as well, and accumulates the build result.
-
-If your first step is to run unit tests, followed by integration tests, you may still want to see if the integration tests succeed when the unit tests fail.
-
-You can change this behavior.
-
-```yaml
-script: bundle exec rake build && bundle exec rake builddoc
-```
-
-This example (note the `&&`) fails immediately when `bundle exec rake build` fails.
-
-If any of the commands in the first four stages of the build lifecycle return a non-zero exit code, the build is broken:
-
-- If `before_install`, `install` or `before_script` return a non-zero exit code, the build is errored and stops immediately.
-- If `script` returns a non-zero exit code, the build is failed, but continues to run before being marked as failed.
-
-The `after_success`, `after_failure`, `after_script` and subsequent stages do not affect the the build result.
-
-### 6. Build Timeouts
-
-Because it is very common for test suites or build scripts to hang, Travis CI has specific time limits for each job. If a script or test suite takes longer than 50 minutes (or 120 minutes on travis-ci.com), or if there is not log output for 10 minutes, it is terminated, and a message is written to the build log.
-
-There is no timeout for a build; a build will run as long as all the jobs do as long as each job does not timeout.
-
-### 7. Building Specific Branches
-
-Travis CI uses the `.travis.yml` file from the branch specified by the git commit that triggers the build.
-
-You can tell Travis to build multiple branches using blacklists or whitelists. Specify which branches to build using a whitelist, or blacklist branches that you do not want to be built:
-
-```yaml
-# blacklist
-branches:
-  except:
-    - legacy
-    - experimental
-
-# whitelist
-branches:
-  only:
-    - master
-    - stable
-```
-
-If you specify both, only takes precedence over except. By default, gh-pages branch is not built unless you add it to the whitelist.
-
-You can use regular expressions to whitelist or blacklist branches:
-
-```yaml
-branches:
-  only:
-    - master
-    - /^deploy-.*$/
-```
-
-If you don’t want to run a build for a particular commit, because all you are changing is the README for example, add `[ci skip]` to the git commit message. Commits that have `[ci skip]` anywhere in the commit messages are ignored by Travis CI.
-
-### 8. Deploying your Code
-
-An optional phase in the build lifecycle is deployment.
-
-When deploying files to a provider, prevent Travis CI from resetting your working directory and deleting all changes made during the build ( `git stash --all`) by adding `skip_cleanup` to your `.travis.yml`:
-
-```yaml
-deploy:
-  skip_cleanup: true
-```
-
-You can run steps before a deploy by using the `before_deploy` phase. A non-zero exit code in this command will mark the build as errored.
-
-If there are any steps you’d like to run after the deployment, you can use the `after_deploy` phase.
-
-## Useful Links
-
-- [Building a Node.js project](http://docs.travis-ci.com/user/languages/javascript-with-nodejs/), by Travis CI
-- [Customizing the Build](http://docs.travis-ci.com/user/customizing-the-build/), by Travis CI
-- [CI-By-Example](https://github.com/buildfirst/ci-by-example), by bevacqua
-- [Travis-CI: What, Why, How](http://code.tutsplus.com/tutorials/travis-ci-what-why-how--net-34771), by Sayanee Basu
