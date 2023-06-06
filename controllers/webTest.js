@@ -1,4 +1,10 @@
-const http = require("../utils/http");
+/*
+ * @Description: 
+ * @Author:  
+ * @Date: 2023-06-06 11:05:02
+ * @LastEditTime: 2023-06-06 15:14:05
+ * @LastEditors:  
+ */
 var fn_index = async (ctx, next) => {
     ctx.response.body = `<h1>Index</h1>
         <form action="/signin" method="post">
@@ -21,15 +27,7 @@ var fn_signin = async (ctx, next) => {
     }
 };
 
-var fetchData = async (ctx, next) => {
-    let rs = await http.get("https://www.fastmock.site/mock/cc1aeeec1b278c3c30ec60eeaf462247/front/getPicList")
-    ctx.success({
-        data: rs
-    })
-}
-
 module.exports = {
     'GET /login': fn_index,
-    'GET /getData': fetchData,
     'POST /signin': fn_signin
 };
