@@ -1,0 +1,157 @@
+<!--
+ * @Description: 
+ * @Author:  
+ * @Date: 2023-06-09 10:37:27
+ * @LastEditTime: 2023-06-09 17:02:41
+ * @LastEditors:  
+-->
+<!DOCTYPE html>
+<html lang="en">
+ 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>json数据格式化</title>
+    <style>
+        .page {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .page-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+        .page-content .box {
+            width: 45%;
+            height: 70%;
+            outline: 1px solid #ccc;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        /* 方法1：设置textarea合适的宽高 */
+        #jsonTextarea {
+            width: 100%;
+            height: 100%;
+            outline: none;
+            border: none;
+        }
+ 
+        /* 方法2：自定义高亮样式 */
+        #jsonPre {
+            width: 100%;
+            height: 100%;
+            overflow: scroll;
+        }
+ 
+        .string {
+            color: green;
+        }
+ 
+        .number {
+            color: darkorange;
+        }
+ 
+        .boolean {
+            color: blue;
+        }
+ 
+        .null {
+            color: magenta;
+        }
+ 
+        .key {
+            color: red;
+        }
+    </style>
+</head>
+ 
+<body>
+    <div class="page">
+        <div class="page-title">json数据编辑</div>
+        <div class="page-content">
+            <div class="box">
+                <textarea id="jsonTextarea" ></textarea>
+                <p>
+                    <button class="btn-save">保存</button>
+                </p>
+            </div>
+            <div class="box">
+                <pre id="jsonPre"></pre>
+            </div>
+        </div>
+    </div>
+</body>
+ 
+<script>
+    
+    ;(async ()=> {
+        var data = '[{"name":"黑子","sex":"男","Age":25,"hobby":["篮球","跑步","看电影","王者荣耀"],"normal":true},{"name":"张三","sex":"男","Age":25,"hobby":["上天","入地"],"normal":false}]';
+        const jsonPre = document.getElementById('jsonPre'),
+        btnSave = document.querySelector(".btn-save"),
+        jsonTextarea = document.getElementById('jsonTextarea');
+        async function getJson() {
+            return await fetch("http://localhost:3030/getFileFromLowCodeService?name=assets.json").then(rs=> rs.json());
+        }
+        // 方法：pre + JSON.stringify
+        function parse(str) {
+            // 设置缩进为2个空格
+            str = JSON.stringify(str, null, 2);
+            str = str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            return str.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                var cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+        
+        async function render() {
+            data = await getJson();
+            jsonPre.innerHTML = parse(data);
+            jsonTextarea.value = jsonPre.innerText;
+        }
+
+        function bindEvent() {
+            btnSave.onclick = function(obj) {
+                fetch("http://localhost:3030/updateLowCodeServiceFile", {
+                    method: "post",
+                    body: JSON.stringify({
+                        json: JSON.parse(jsonTextarea.value), //JSON.stringify(JSON.parse(jsonTextarea.value)),
+                        fileName: "assets.json"
+                    })
+                })
+                jsonPre.innerHTML = parse(JSON.parse(jsonTextarea.value));
+            }
+        }
+
+        function init() {
+            render();
+            bindEvent();
+        }
+
+        init();
+    })();
+    
+    
+
+    
+</script>
+ 
+</html>

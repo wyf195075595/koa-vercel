@@ -1,8 +1,8 @@
 /*
- * @Description: 
+ * @Description: 用户操作相关接口
  * @Author:  
  * @Date: 2023-06-06 11:51:47
- * @LastEditTime: 2023-06-06 15:08:18
+ * @LastEditTime: 2023-06-06 16:10:35
  * @LastEditors:  
  */
 const model = require("../utils/db-commom-model");
@@ -15,6 +15,8 @@ var getUser = async (ctx, next) => {
         rs = await model.getUserById(id);
     } else if(username) {
         rs = await model.getUserByName(username);
+    } else {
+        rs = await model.getUser();
     }
     ctx.success({
         data: rs

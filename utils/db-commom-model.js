@@ -2,7 +2,7 @@
  * @Description: 
  * @Author:  
  * @Date: 2023-06-06 11:17:27
- * @LastEditTime: 2023-06-06 15:04:31
+ * @LastEditTime: 2023-06-09 18:13:14
  * @LastEditors:  
  */
 const db = require('../utils/db-mysql');
@@ -31,6 +31,11 @@ class CommonModel {
     }
     async getUserById (id) {
         return await db.query(`select * from mydb1024.sys_user where id='${id}'`)
+    }
+
+    // lowCode schema
+    async getSchameList () {
+        return await db.query(`select * from mydb1024.lowcode_pages`)
     }
 }
  

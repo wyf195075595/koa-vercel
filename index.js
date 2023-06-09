@@ -2,7 +2,7 @@
  * @Description: 
  * @Author:  
  * @Date: 2023-04-20 16:04:35
- * @LastEditTime: 2023-04-20 17:11:33
+ * @LastEditTime: 2023-06-07 17:23:59
  * @LastEditors:  
  */
 const Koa = require('koa');
@@ -26,6 +26,15 @@ app.use(routerResponse({
 // 获取post请求参数
 const bodyparser = require('koa-bodyparser');
 app.use(bodyparser())
+
+const {koaBody } = require('koa-body');
+//处理上传文件
+app.use(koaBody({
+    multipart: true,//多文件
+    formidable: {
+        maxFileSize: 200*1024*1024	// 设置上传文件大小最大限制，默认2M
+    }
+}))
 
 // 注册路由
 const controller = require('./middleware/controllers');
