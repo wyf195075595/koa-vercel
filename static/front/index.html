@@ -2,7 +2,7 @@
  * @Description: 
  * @Author:  
  * @Date: 2023-06-09 10:37:27
- * @LastEditTime: 2023-06-09 17:02:41
+ * @LastEditTime: 2023-06-11 10:55:04
  * @LastEditors:  
 -->
 <!DOCTYPE html>
@@ -88,14 +88,14 @@
 </body>
  
 <script>
-    
+    const baseURL = "https://vercel-koa-three.vercel.app"
     ;(async ()=> {
         var data = '[{"name":"黑子","sex":"男","Age":25,"hobby":["篮球","跑步","看电影","王者荣耀"],"normal":true},{"name":"张三","sex":"男","Age":25,"hobby":["上天","入地"],"normal":false}]';
         const jsonPre = document.getElementById('jsonPre'),
         btnSave = document.querySelector(".btn-save"),
         jsonTextarea = document.getElementById('jsonTextarea');
         async function getJson() {
-            return await fetch("http://localhost:3030/getFileFromLowCodeService?name=assets.json").then(rs=> rs.json());
+            return await fetch(baseURL+"/getFileFromLowCodeService?name=assets.json").then(rs=> rs.json());
         }
         // 方法：pre + JSON.stringify
         function parse(str) {
@@ -130,7 +130,7 @@
 
         function bindEvent() {
             btnSave.onclick = function(obj) {
-                fetch("http://localhost:3030/updateLowCodeServiceFile", {
+                fetch(baseURL+"/updateLowCodeServiceFile", {
                     method: "post",
                     body: JSON.stringify({
                         json: JSON.parse(jsonTextarea.value), //JSON.stringify(JSON.parse(jsonTextarea.value)),
