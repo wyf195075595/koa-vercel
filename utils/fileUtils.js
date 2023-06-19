@@ -2,7 +2,7 @@
  * @Description: 
  * @Author:  
  * @Date: 2023-06-07 17:50:55
- * @LastEditTime: 2023-06-09 14:42:29
+ * @LastEditTime: 2023-06-12 15:27:54
  * @LastEditors:  
  */
 const fs = require('fs/promises');
@@ -131,7 +131,7 @@ class FileUtils {
             return resultTips.UPDATE_SUCCESS;
         } catch (error) {
             console.warn(resultTips.UPDATE_FAIL + error);
-            return resultTips.UPDATE_FAIL;
+            return resultTips.UPDATE_FAIL + error;
         }
     }
 }
