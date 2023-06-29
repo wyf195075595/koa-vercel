@@ -15,6 +15,13 @@ function routerResponse(option = {}){
                 msg : msg || option.successMsg || 'fail'
             }
         }
+        ctx.send = function({results, code}) {
+            if(code === 200) {
+                ctx.success(results);
+            } else {
+                ctx.fail(results, code);
+            }
+        }
         await next();
     }
 }
